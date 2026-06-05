@@ -1,0 +1,36 @@
+# PlatePlayed configuration.
+# Copy to `config.yaml` and edit. Environment overrides: PLATEPLAYED_DB_URL.
+
+# SQLAlchemy database URL. SQLite by default (file created on first run).
+# For Postgres: postgresql+psycopg://user:pass@host:5432/plateplayed
+database_url: "sqlite:///data/plateplayed.db"
+
+# Where full-frame and cropped-plate screenshots are written.
+screenshot_dir: "data/screenshots"
+
+# Detection engine: "fast-alpr" (real ML) or "stub" (no-op, for testing).
+# "auto" uses fast-alpr if installed, otherwise falls back to the stub.
+detector: "auto"
+
+# Minimum OCR confidence (0..1) required to log a plate.
+min_confidence: 0.55
+
+# Seconds between sampled frames per stream. Lower = more thorough, more CPU.
+sample_interval_seconds: 2.0
+
+# Don't log the same plate from the same stream more often than this (seconds).
+# A parked or slow car stays one detection row whose `last_seen`/`count` update.
+dedup_cooldown_seconds: 30
+
+# Save a cropped close-up of each detected plate alongside the full frame.
+save_plate_crops: true
+
+# YouTube live streams to watch. `name` is a friendly label stored in the DB.
+streams:
+  - name: "Jackson Hole Town Square"
+    url: "https://www.youtube.com/watch?v=1EiC9bvVGnk"
+    enabled: true
+
+  - name: "Example Traffic Cam"
+    url: "https://www.youtube.com/watch?v=YOUR_STREAM_ID"
+    enabled: false

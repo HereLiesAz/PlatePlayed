@@ -1,0 +1,9 @@
+# Heavyweight ML dependencies for the real ALPR engine.
+# Installed separately because they pull in ONNX Runtime and model weights.
+# Without these, PlatePlayed automatically falls back to the stub detector,
+# so the rest of the system (streams, DB, API, dashboard) still runs.
+#
+#   pip install -r requirements-ml.txt
+#
+fast-alpr>=0.1.0
+onnxruntime>=1.16.0

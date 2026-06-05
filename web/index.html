@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#111111">
+    <title>PlatePlayed</title>
+    <link rel="icon" href="/icon.svg">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1>PlatePlayed</h1>
+        <div class="stats" id="stats">
+            <span><strong id="stat-plates">–</strong> plates</span>
+            <span><strong id="stat-detections">–</strong> detections</span>
+            <span><strong id="stat-streams">–</strong> streams</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="controls">
+            <input id="search" type="search" placeholder="Filter by plate…" autocomplete="off">
+            <label class="auto"><input type="checkbox" id="autorefresh" checked> Auto-refresh</label>
+        </div>
+        <div id="grid" class="grid"></div>
+        <p id="empty" class="empty" hidden>No detections yet. Start the watcher with
+            <code>plateplayed run</code>.</p>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

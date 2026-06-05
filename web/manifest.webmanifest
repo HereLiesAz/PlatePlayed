@@ -1,13 +1,13 @@
 {
-  "name": "PWA Starter",
-  "short_name": "PWA",
+  "name": "PlatePlayed",
+  "short_name": "PlatePlayed",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#111111",
   "theme_color": "#111111",
-  "description": "An installable, offline-capable PWA scaffolded by IDEaz.",
+  "description": "Live license-plate detections logged from YouTube streams.",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

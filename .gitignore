@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Project data (runtime artifacts — never commit)
+data/
+*.db
+*.sqlite
+*.sqlite3
+config.yaml
+
+# ML model caches
+*.onnx
+.cache/
+~/.cache/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Test / tooling
+.pytest_cache/
+.coverage
+htmlcov/

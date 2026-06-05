@@ -1,0 +1,26 @@
+# Two services sharing the same database + screenshot volume:
+#   watcher  — runs the ML pipeline against the configured streams
+#   web      — serves the dashboard and API on :8000
+#
+#   docker compose up --build
+services:
+  watcher:
+    build: .
+    command: ["run", "-c", "config.yaml"]
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - plate-data:/app/data
+    restart: unless-stopped
+
+  web:
+    build: .
+    command: ["serve", "-c", "config.yaml", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - plate-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  plate-data:
