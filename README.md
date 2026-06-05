@@ -164,7 +164,7 @@ naming and box-association are unit-tested offline.
 ```bash
 pip install -r requirements.txt
 pip install -e ".[dev]"
-pytest                       # 34 tests, no ML or network required
+pytest                       # 41 tests, no ML or network required
 ```
 
 The core logic (config, database, de-duplication, tracking/voting, vehicle
@@ -174,15 +174,17 @@ runs the suite on every push and pull request across Python 3.10–3.12.
 
 ## Roadmap
 
-Design docs for proposed work live in [`docs/`](docs/):
+Design docs live in [`docs/`](docs/). **Phase 0** (interface + schema + config +
+stub, wired end-to-end) is built for both — the `detections` table, API, and
+dashboard already carry the fields; only the trained models remain:
 
 - [Make / model recognition](docs/scoping-make-model.md) — fine-grained
-  classification of the vehicle crop.
+  classification of the vehicle crop. *(stub active; real backend next)*
 - [Rich vehicle taxonomy](docs/scoping-vehicle-taxonomy.md) — emergency /
-  construction / heavy / commercial categories beyond COCO.
+  construction / heavy / commercial categories beyond COCO. *(stub active)*
 
-Both extend `plateplayed/vehicle.py`, are gated behind opt-in config, and ship
-an evaluation harness — because the deciding factor for each is measured
+Both extend `plateplayed/vehicle.py`, are gated behind opt-in config, and degrade
+to null fields without a model — because the deciding factor for each is measured
 accuracy on real street-cam footage, not benchmark numbers.
 
 ## Responsible use

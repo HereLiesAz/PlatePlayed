@@ -64,5 +64,17 @@ body {
 .card .meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.5; }
 .card .conf { color: var(--accent); }
 .card .vehicle { color: #cbd5e1; text-transform: capitalize; }
+.card .category {
+    margin-left: 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fca5a5;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+    vertical-align: middle;
+}
 .empty { color: var(--muted); text-align: center; margin-top: 4rem; }
 code { background: #222; padding: 0.1rem 0.35rem; border-radius: 4px; }

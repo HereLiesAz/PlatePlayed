@@ -10,7 +10,9 @@ from .config import Config
 from .db import init_db
 from .detector import build_detector
 from .recorder import Recorder
+from .make_model import build_make_model_classifier
 from .storage import ScreenshotStore
+from .taxonomy import build_taxonomy_classifier
 from .tracking import PlateTracker
 from .vehicle import VehicleAnalyzer, build_vehicle_detector
 from .worker import StreamWorker
@@ -40,7 +42,32 @@ class Pipeline:
                 model=config.vehicle_model,
                 min_confidence=config.vehicle_min_confidence,
             )
-            self.vehicle_analyzer = VehicleAnalyzer(detector)
+            make_model = None
+            if config.make_model_enabled:
+                make_model = build_make_model_classifier(
+                    config.make_model_backend,
+                    model_path=config.make_model_path,
+                    min_confidence=config.make_model_min_confidence,
+                    region=config.make_model_region,
+                )
+            taxonomy = None
+            if config.taxonomy_enabled:
+                taxonomy = build_taxonomy_classifier(
+                    config.taxonomy_backend,
+                    model_path=config.taxonomy_model_path,
+                    version=config.taxonomy_version,
+                    min_confidence=config.taxonomy_min_confidence,
+                )
+            self.vehicle_analyzer = VehicleAnalyzer(
+                detector,
+                make_model_classifier=make_model,
+                taxonomy_classifier=taxonomy,
+            )
+        elif config.make_model_enabled or config.taxonomy_enabled:
+            logger.warning(
+                "make_model/taxonomy need vehicle.enabled=true (they run on the "
+                "vehicle crop); they will be inactive."
+            )
         self._detect_lock = threading.Lock()
         self._workers: list[StreamWorker] = []
 

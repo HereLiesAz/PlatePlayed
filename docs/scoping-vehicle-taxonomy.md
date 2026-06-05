@@ -1,6 +1,15 @@
 # Scoping: Rich vehicle taxonomy (emergency / construction / heavy)
 
-Status: **proposed** · Owner: TBD · Builds on the existing `vehicle.py` analyzer.
+Status: **Phase 0 built** (interface + schema + config + stub, wired
+end-to-end) · Remaining phases proposed · Builds on `vehicle.py`.
+
+> **Phase 0 is in the codebase.** `plateplayed/taxonomy.py` defines the
+> `TaxonomyClassifier` interface and a stub; `VehicleAnalyzer` runs it on the
+> vehicle crop; `detections` has `vehicle_category` /
+> `vehicle_category_confidence` columns (migration `c2e5cf7`); config block
+> `taxonomy:` (default off, incl. `emergency_requires_corroboration`) gates it;
+> the API/dashboard surface the category as a badge. The real classifier is the
+> next phase and currently raises `NotImplementedError`.
 
 ## Goal
 

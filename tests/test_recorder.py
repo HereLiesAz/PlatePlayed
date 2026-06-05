@@ -137,6 +137,21 @@ def test_vehicle_attributes_backfilled_on_repeat(recorder):
     assert row.vehicle_color == "blue"
 
 
+def test_make_model_and_category_persisted(recorder):
+    from plateplayed.vehicle import VehicleInfo
+
+    info = VehicleInfo(
+        type="car", color="white", confidence=0.9,
+        make="Honda", model="Civic", make_model_confidence=0.8,
+        category="police", category_confidence=0.75,
+    )
+    row = recorder.record("Cam 1", "http://s/1", det(), frame=None, vehicle=info)
+    assert row.vehicle_make == "Honda"
+    assert row.vehicle_model == "Civic"
+    assert row.vehicle_category == "police"
+    assert row.vehicle_category_confidence == 0.75
+
+
 def test_frame_is_saved_when_provided(recorder):
     frame = np.zeros((20, 20, 3), dtype=np.uint8)
     row = recorder.record("Cam 1", "http://s/1", det(), frame=frame)

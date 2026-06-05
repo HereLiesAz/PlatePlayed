@@ -1,6 +1,15 @@
 # Scoping: Make / Model recognition
 
-Status: **proposed** · Owner: TBD · Builds on the existing `vehicle.py` analyzer.
+Status: **Phase 0 built** (interface + schema + config + stub, wired
+end-to-end) · Remaining phases proposed · Builds on `vehicle.py`.
+
+> **Phase 0 is in the codebase.** `plateplayed/make_model.py` defines the
+> `MakeModelClassifier` interface and a stub; `VehicleAnalyzer` runs it on the
+> vehicle crop; `detections` has `vehicle_make` / `vehicle_model` /
+> `vehicle_make_model_confidence` columns (migration `c2e5cf7`); config block
+> `make_model:` (default off) gates it; the API/dashboard surface make/model.
+> A real backend (`onnx`/`api`) is the next phase and currently raises
+> `NotImplementedError`.
 
 ## Goal
 

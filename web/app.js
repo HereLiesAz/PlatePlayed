@@ -47,13 +47,18 @@ function cardHTML(d) {
         ? `<img loading="lazy" src="${img}" alt="${escapeHTML(d.plate_number)}">`
         : `<div class="card-noimg"></div>`;
     const seen = d.count > 1 ? `${fmt(d.last_seen_at)} · seen ×${d.count}` : fmt(d.seen_at);
-    const vehicle = [d.vehicle_color, d.vehicle_type].filter(Boolean).join(" ");
+    // Prefer make/model when present, else fall back to the coarse type.
+    const descParts = [d.vehicle_color, d.vehicle_make, d.vehicle_model];
+    if (!d.vehicle_make) descParts.push(d.vehicle_type);
+    const vehicle = descParts.filter(Boolean).join(" ");
     const vehicleLine = vehicle ? `<span class="vehicle">${escapeHTML(vehicle)}</span><br>` : "";
+    const category = d.vehicle_category
+        ? `<span class="category">${escapeHTML(d.vehicle_category)}</span>` : "";
     return `
         <article class="card">
             ${thumb}
             <div class="body">
-                <div class="plate">${escapeHTML(d.plate_number)}</div>
+                <div class="plate">${escapeHTML(d.plate_number)}${category}</div>
                 <div class="meta">
                     <span class="conf">${Math.round((d.confidence || 0) * 100)}% conf</span><br>
                     ${vehicleLine}

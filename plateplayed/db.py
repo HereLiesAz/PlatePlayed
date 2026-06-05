@@ -81,6 +81,12 @@ class Detection(Base):
     vehicle_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
     vehicle_color: Mapped[str | None] = mapped_column(String(32), nullable=True)
     vehicle_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Make/model + rich taxonomy (Phase 0 columns; populated once models land).
+    vehicle_make: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    vehicle_model: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    vehicle_make_model_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    vehicle_category: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    vehicle_category_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     plate: Mapped["Plate"] = relationship(back_populates="detections")
     stream: Mapped["Stream"] = relationship(back_populates="detections")

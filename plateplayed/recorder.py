@@ -99,10 +99,18 @@ class Recorder:
                 if detection.confidence > recent.confidence:
                     recent.confidence = detection.confidence
                 # Backfill vehicle attributes if we didn't have them before.
-                if vehicle is not None and recent.vehicle_type is None:
-                    recent.vehicle_type = vehicle.type
-                    recent.vehicle_color = vehicle.color
-                    recent.vehicle_confidence = vehicle.confidence
+                if vehicle is not None:
+                    if recent.vehicle_type is None and vehicle.type is not None:
+                        recent.vehicle_type = vehicle.type
+                        recent.vehicle_color = vehicle.color
+                        recent.vehicle_confidence = vehicle.confidence
+                    if recent.vehicle_make is None and vehicle.make is not None:
+                        recent.vehicle_make = vehicle.make
+                        recent.vehicle_model = vehicle.model
+                        recent.vehicle_make_model_confidence = vehicle.make_model_confidence
+                    if recent.vehicle_category is None and vehicle.category is not None:
+                        recent.vehicle_category = vehicle.category
+                        recent.vehicle_category_confidence = vehicle.category_confidence
                 session.commit()
                 return recent
 
@@ -129,6 +137,11 @@ class Recorder:
                 vehicle_type=vehicle.type if vehicle else None,
                 vehicle_color=vehicle.color if vehicle else None,
                 vehicle_confidence=vehicle.confidence if vehicle else None,
+                vehicle_make=vehicle.make if vehicle else None,
+                vehicle_model=vehicle.model if vehicle else None,
+                vehicle_make_model_confidence=vehicle.make_model_confidence if vehicle else None,
+                vehicle_category=vehicle.category if vehicle else None,
+                vehicle_category_confidence=vehicle.category_confidence if vehicle else None,
             )
             session.add(row)
             session.commit()

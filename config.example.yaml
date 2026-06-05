@@ -43,6 +43,27 @@ vehicle:
   model: "yolov8n.pt"       # ultralytics COCO weights (downloaded on first run)
   min_confidence: 0.4
 
+# Make/model recognition (Phase 0 — interface + stub only; no model yet).
+# Needs vehicle.enabled. See docs/scoping-make-model.md. Leaving enabled:false
+# keeps make/model null; "onnx"/"api" backends raise until implemented.
+make_model:
+  enabled: false
+  backend: "auto"           # auto | onnx | api | stub
+  model_path: null
+  min_confidence: 0.5
+  region: null              # e.g. "US" — scopes the taxonomy/fleet
+
+# Rich vehicle taxonomy (Phase 0 — interface + stub only; no model yet).
+# Categories like police / ambulance / dump_truck / excavator. Needs
+# vehicle.enabled. See docs/scoping-vehicle-taxonomy.md.
+taxonomy:
+  enabled: false
+  backend: "auto"           # auto | onnx | stub
+  model_path: null
+  version: "v1"
+  min_confidence: 0.5
+  emergency_requires_corroboration: true
+
 # Dashboard / API authentication (HTTP Basic). Auth is enforced only when a
 # password is set. Prefer the PLATEPLAYED_AUTH_USERNAME / PLATEPLAYED_AUTH_PASSWORD
 # environment variables over committing credentials here.

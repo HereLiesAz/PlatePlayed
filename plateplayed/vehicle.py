@@ -45,6 +45,11 @@ class VehicleInfo:
     type: str | None = None
     color: str | None = None
     confidence: float | None = None
+    make: str | None = None
+    model: str | None = None
+    make_model_confidence: float | None = None
+    category: str | None = None
+    category_confidence: float | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -160,11 +165,23 @@ def build_vehicle_detector(
 # Analysis
 # --------------------------------------------------------------------------- #
 class VehicleAnalyzer:
-    """Links a plate to its vehicle and reports the vehicle's type + color."""
+    """Links a plate to its vehicle and reports the vehicle's attributes.
 
-    def __init__(self, detector: VehicleDetector, containment_threshold: float = 0.3) -> None:
+    Always reports type + color. When a make/model or taxonomy classifier is
+    supplied, it is run on the same vehicle crop to fill those fields too.
+    """
+
+    def __init__(
+        self,
+        detector: VehicleDetector,
+        containment_threshold: float = 0.3,
+        make_model_classifier=None,
+        taxonomy_classifier=None,
+    ) -> None:
         self._detector = detector
         self.containment_threshold = containment_threshold
+        self._make_model = make_model_classifier
+        self._taxonomy = taxonomy_classifier
 
     def detect_vehicles(self, frame: np.ndarray) -> list[VehicleBox]:
         return self._detector.detect(frame)
@@ -172,7 +189,7 @@ class VehicleAnalyzer:
     def associate(
         self, plate_box: Box, vehicles: list[VehicleBox], frame: np.ndarray
     ) -> VehicleInfo | None:
-        """Find the vehicle enclosing ``plate_box`` and read its type/color."""
+        """Find the vehicle enclosing ``plate_box`` and read its attributes."""
         best, best_score = None, 0.0
         for vehicle in vehicles:
             score = _containment(plate_box, vehicle.box)
@@ -182,8 +199,25 @@ class VehicleAnalyzer:
         if best is None or best_score < self.containment_threshold:
             return None
 
-        color = classify_color(_crop(frame, best.box))
-        return VehicleInfo(type=best.type, color=color, confidence=best.confidence)
+        crop = _crop(frame, best.box)
+        info = VehicleInfo(
+            type=best.type, color=classify_color(crop), confidence=best.confidence
+        )
+
+        if self._make_model is not None and crop is not None:
+            mm = self._make_model.classify(crop)
+            if mm is not None:
+                info.make = mm.make
+                info.model = mm.model
+                info.make_model_confidence = mm.confidence
+
+        if self._taxonomy is not None and crop is not None:
+            tx = self._taxonomy.classify(crop)
+            if tx is not None:
+                info.category = tx.category
+                info.category_confidence = tx.confidence
+
+        return info
 
 
 def _containment(inner: Box, outer: Box) -> float:

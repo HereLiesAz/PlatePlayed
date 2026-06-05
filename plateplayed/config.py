@@ -46,6 +46,21 @@ class Config:
     vehicle_model: str = "yolov8n.pt"
     vehicle_min_confidence: float = 0.4
 
+    # Make/model recognition (Phase 0 — stub only; needs vehicle detection on).
+    make_model_enabled: bool = False
+    make_model_backend: str = "auto"
+    make_model_path: str | None = None
+    make_model_min_confidence: float = 0.5
+    make_model_region: str | None = None
+
+    # Rich vehicle taxonomy (Phase 0 — stub only; needs vehicle detection on).
+    taxonomy_enabled: bool = False
+    taxonomy_backend: str = "auto"
+    taxonomy_model_path: str | None = None
+    taxonomy_version: str = "v1"
+    taxonomy_min_confidence: float = 0.5
+    taxonomy_emergency_requires_corroboration: bool = True
+
     # Dashboard / API HTTP Basic auth. Auth is enforced when a password is set.
     auth_username: str = "admin"
     auth_password: str | None = None
@@ -80,6 +95,8 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
 
     tracking = data.get("tracking") or {}
     vehicle = data.get("vehicle") or {}
+    make_model = data.get("make_model") or {}
+    taxonomy = data.get("taxonomy") or {}
     auth = data.get("auth") or {}
 
     config = Config(
@@ -107,6 +124,26 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
         vehicle_model=vehicle.get("model", Config.vehicle_model),
         vehicle_min_confidence=float(
             vehicle.get("min_confidence", Config.vehicle_min_confidence)
+        ),
+        make_model_enabled=bool(make_model.get("enabled", Config.make_model_enabled)),
+        make_model_backend=make_model.get("backend", Config.make_model_backend),
+        make_model_path=make_model.get("model_path", Config.make_model_path),
+        make_model_min_confidence=float(
+            make_model.get("min_confidence", Config.make_model_min_confidence)
+        ),
+        make_model_region=make_model.get("region", Config.make_model_region),
+        taxonomy_enabled=bool(taxonomy.get("enabled", Config.taxonomy_enabled)),
+        taxonomy_backend=taxonomy.get("backend", Config.taxonomy_backend),
+        taxonomy_model_path=taxonomy.get("model_path", Config.taxonomy_model_path),
+        taxonomy_version=taxonomy.get("version", Config.taxonomy_version),
+        taxonomy_min_confidence=float(
+            taxonomy.get("min_confidence", Config.taxonomy_min_confidence)
+        ),
+        taxonomy_emergency_requires_corroboration=bool(
+            taxonomy.get(
+                "emergency_requires_corroboration",
+                Config.taxonomy_emergency_requires_corroboration,
+            )
         ),
         auth_username=auth.get("username", Config.auth_username),
         auth_password=auth.get("password", Config.auth_password),
