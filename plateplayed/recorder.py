@@ -7,6 +7,7 @@ unit-tested with an in-memory SQLite database.
 from __future__ import annotations
 
 import logging
+import threading
 from datetime import timedelta
 
 import numpy as np
@@ -34,6 +35,9 @@ class Recorder:
         self.min_confidence = min_confidence
         self.cooldown = timedelta(seconds=dedup_cooldown_seconds)
         self.save_plate_crops = save_plate_crops
+        # Serializes the read-modify-write below so concurrent workers can't
+        # both insert the same new plate (unique-constraint race).
+        self._lock = threading.Lock()
 
     def record(
         self,
@@ -51,7 +55,7 @@ class Recorder:
         if detection.confidence < self.min_confidence:
             return None
 
-        with self._Session() as session:
+        with self._lock, self._Session() as session:
             stream = get_or_create_stream(session, stream_name, stream_url)
             now = utcnow()
 

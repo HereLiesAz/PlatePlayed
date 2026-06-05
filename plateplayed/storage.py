@@ -35,8 +35,9 @@ class ScreenshotStore:
     ) -> tuple[str | None, str | None]:
         """Save the full frame (and optional plate crop).
 
-        Returns ``(frame_path, crop_path)`` as strings relative to nothing in
-        particular — they're stored verbatim and served by the API.
+        Returns ``(frame_path, crop_path)`` as strings relative to the
+        screenshot root, so the database stays portable across working
+        directories and Docker volume mounts.
         """
         ts = datetime.now(timezone.utc).strftime("%H%M%S_%f")
         safe_plate = "".join(c for c in plate_number if c.isalnum()) or "unknown"
@@ -60,7 +61,10 @@ class ScreenshotStore:
                     logger.error("Failed to write plate crop: %s", exc)
                     crop_path = None
 
-        return str(frame_path), (str(crop_path) if crop_path else None)
+        return (
+            str(frame_path.relative_to(self.root)),
+            str(crop_path.relative_to(self.root)) if crop_path else None,
+        )
 
 
 def _crop(

@@ -91,7 +91,10 @@ def screenshot(detection_id: int, kind: str):
         raw = det.frame_path if kind == "frame" else det.plate_crop_path
     if not raw:
         raise HTTPException(404, "No screenshot for this detection")
-    path = Path(raw).resolve()
+    # Stored paths are relative to the screenshot root (older absolute paths
+    # are still honored). Resolve, then confirm it stays inside the root.
+    candidate = Path(raw)
+    path = (candidate if candidate.is_absolute() else SCREENSHOT_ROOT / candidate).resolve()
     if SCREENSHOT_ROOT not in path.parents or not path.exists():
         raise HTTPException(404, "Screenshot file missing")
     return FileResponse(path)

@@ -81,9 +81,45 @@ def test_higher_confidence_updates_on_repeat(recorder):
     assert row.confidence == pytest.approx(0.95)
 
 
+def test_concurrent_same_plate_no_integrity_error(tmp_path):
+    # Many threads recording the same brand-new plate at once must not race
+    # into a duplicate-insert (unique constraint) error; the lock serializes.
+    # Uses a file-backed SQLite so all threads share one database (an
+    # in-memory DB would give each thread its own copy).
+    import threading
+
+    session_factory = init_db(f"sqlite:///{tmp_path / 'race.db'}")
+    recorder = Recorder(
+        session_factory,
+        ScreenshotStore(tmp_path / "shots"),
+        min_confidence=0.5,
+        dedup_cooldown_seconds=30,
+        save_plate_crops=False,
+    )
+
+    errors: list[Exception] = []
+
+    def worker():
+        try:
+            recorder.record("Cam 1", "http://s/1", det(), frame=None)
+        except Exception as exc:  # pragma: no cover - failure path
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker) for _ in range(16)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert errors == []
+    with recorder._Session() as s:
+        assert s.query(Plate).count() == 1  # exactly one plate row, no dupes
+
+
 def test_frame_is_saved_when_provided(recorder):
     frame = np.zeros((20, 20, 3), dtype=np.uint8)
     row = recorder.record("Cam 1", "http://s/1", det(), frame=frame)
     assert row.frame_path is not None
-    import os
-    assert os.path.exists(row.frame_path)
+    # Paths are stored relative to the screenshot root.
+    full = recorder._store.root / row.frame_path
+    assert full.exists()

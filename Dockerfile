@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install --no-cache-dir -r requirements-ml.txt
 
 COPY . .
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Dashboard / API
 EXPOSE 8000

@@ -44,7 +44,7 @@ async function refreshDetections() {
 function cardHTML(d) {
     const img = d.plate_url || d.frame_url;
     const thumb = img
-        ? `<img loading="lazy" src="${img}" alt="${d.plate_number}">`
+        ? `<img loading="lazy" src="${img}" alt="${escapeHTML(d.plate_number)}">`
         : `<div class="card-noimg"></div>`;
     const seen = d.count > 1 ? `${fmt(d.last_seen_at)} · seen ×${d.count}` : fmt(d.seen_at);
     return `
