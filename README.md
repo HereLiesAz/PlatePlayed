@@ -38,6 +38,9 @@ YouTube live streams ──► frame sampler ──► ALPR model ──► reco
 
 ## Quick start
 
+> For a full walkthrough (local + Docker, credentials, troubleshooting) see
+> **[SETUP.md](SETUP.md)**.
+
 ```bash
 # 1. Set up (core deps only; uses a no-op stub detector)
 ./scripts/setup.sh
