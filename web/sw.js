@@ -1,6 +1,6 @@
 // Cache the app shell so the dashboard loads offline. API/screenshot
 // responses are always fetched fresh (never cached).
-const CACHE = "com.hereliesaz.plateplayed-v1";
+const CACHE = "com.hereliesaz.plateplayed-v2";
 const SHELL = [
     "/",
     "/index.html",

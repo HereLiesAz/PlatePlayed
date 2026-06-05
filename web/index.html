@@ -15,11 +15,24 @@
         <div class="stats" id="stats">
             <span><strong id="stat-plates">–</strong> plates</span>
             <span><strong id="stat-detections">–</strong> detections</span>
+            <span><strong id="stat-24h">–</strong> in 24h</span>
             <span><strong id="stat-streams">–</strong> streams</span>
+            <span><strong id="stat-alerts">–</strong> alerts</span>
         </div>
     </header>
 
     <main class="container">
+        <section class="panel" id="analytics">
+            <div class="panel-col">
+                <h2>Most seen</h2>
+                <ol id="top-plates" class="top-plates"></ol>
+            </div>
+            <div class="panel-col">
+                <h2>By hour (UTC)</h2>
+                <div id="hourly" class="hourly"></div>
+            </div>
+        </section>
+
         <div class="controls">
             <input id="search" type="search" placeholder="Filter by plate…" autocomplete="off">
             <label class="auto"><input type="checkbox" id="autorefresh" checked> Auto-refresh</label>

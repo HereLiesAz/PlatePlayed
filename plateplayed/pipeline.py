@@ -10,7 +10,9 @@ from .config import Config
 from .db import init_db
 from .detector import build_detector
 from .recorder import Recorder
+from .alerting import Alerter
 from .make_model import build_make_model_classifier
+from .notify import build_notifier
 from .storage import ScreenshotStore
 from .taxonomy import build_taxonomy_classifier
 from .tracking import PlateTracker
@@ -68,6 +70,13 @@ class Pipeline:
                 "make_model/taxonomy need vehicle.enabled=true (they run on the "
                 "vehicle crop); they will be inactive."
             )
+        self.alerter = None
+        if config.alerts_enabled:
+            self.alerter = Alerter(
+                self.session_factory,
+                build_notifier(config.alert_webhook_url),
+                cooldown_seconds=config.alert_cooldown_seconds,
+            )
         self._detect_lock = threading.Lock()
         self._workers: list[StreamWorker] = []
 
@@ -100,6 +109,7 @@ class Pipeline:
                 detect_lock=self._detect_lock,
                 tracker=tracker,
                 vehicle_analyzer=self.vehicle_analyzer,
+                alerter=self.alerter,
             )
             worker.start()
             self._workers.append(worker)

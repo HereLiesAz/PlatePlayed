@@ -28,8 +28,13 @@ YouTube live streams ──► frame sampler ──► ALPR model ──► reco
 - **Saves screenshots** — the full frame plus a cropped close-up of each plate.
 - **De-duplicates** — a parked or slow car becomes a single detection row whose
   `last_seen` / `count` update, instead of thousands of rows.
-- **Serves a live dashboard** — filter by plate, see thumbnails and confidence;
-  protected by HTTP Basic auth when a password is configured.
+- **Analytics** — most-seen plates, cross-stream sightings (a plate on two
+  cameras = movement), by-hour / by-weekday histograms, and per-stream volume.
+- **Watchlist + alerts** — flag plates of interest; a sighting logs an alert
+  and POSTs to a webhook (throttled per plate).
+- **Serves a live dashboard** — filter by plate, see thumbnails and confidence,
+  an analytics panel, and one-click watchlisting; protected by HTTP Basic auth
+  when a password is configured.
 
 ## Quick start
 
@@ -84,6 +89,9 @@ All behaviour is driven by `config.yaml` (see `config.example.yaml`):
 | `vehicle.detector` | `auto` (YOLO if installed, else off), `yolo`, or `stub`. |
 | `vehicle.model` | ultralytics COCO weights (default `yolov8n.pt`). |
 | `vehicle.min_confidence` | Minimum vehicle-detection confidence. |
+| `alerts.enabled` | Fire alerts on watchlisted plate sightings. |
+| `alerts.cooldown_seconds` | Min time between alerts for the same plate. |
+| `alerts.webhook_url` | POST alerts here (or `PLATEPLAYED_ALERT_WEBHOOK`). |
 | `auth.username` / `auth.password` | HTTP Basic creds for the dashboard/API. |
 | `streams` | List of `{ name, url, enabled }` YouTube streams. |
 
@@ -159,6 +167,13 @@ naming and box-association are unit-tested offline.
 | `GET /api/detections` | Recent detections (`?plate=`, `?stream_id=`, `?limit=`, `?offset=`). |
 | `GET /api/plates` | Unique plates with sighting counts. |
 | `GET /api/streams` | Configured streams. |
+| `GET /api/analytics/summary` | Top-line counts incl. last-24h activity. |
+| `GET /api/analytics/top-plates` | Most-seen plates + distinct stream count. |
+| `GET /api/analytics/cross-stream` | Plates seen on more than one stream. |
+| `GET /api/analytics/hourly` · `/weekday` | Detection histograms (`?stream_id=`). |
+| `GET /api/analytics/volume` | Per-stream detection totals. |
+| `GET`/`POST /api/watchlist`, `DELETE /api/watchlist/{plate}` | Manage the watchlist. |
+| `GET /api/alerts` | Recent fired alerts. |
 | `GET /screenshots/{id}/{frame\|plate}` | Screenshot image for a detection. |
 | `GET /` | The dashboard (installable PWA). |
 
@@ -167,12 +182,13 @@ naming and box-association are unit-tested offline.
 ```bash
 pip install -r requirements.txt
 pip install -e ".[dev]"
-pytest                       # 41 tests, no ML or network required
+pytest                       # 57 tests, no ML or network required
 ```
 
 The core logic (config, database, de-duplication, tracking/voting, vehicle
-color + association, screenshot storage, auth, and migrations) is tested against
-in-memory/file SQLite with a stub detector — fast and offline. **GitHub Actions** (`.github/workflows/ci.yml`)
+color + association, analytics, watchlist alerting, screenshot storage, auth,
+and migrations) is tested against in-memory/file SQLite with a stub detector —
+fast and offline. **GitHub Actions** (`.github/workflows/ci.yml`)
 runs the suite on every push and pull request across Python 3.10–3.12.
 
 ## Roadmap

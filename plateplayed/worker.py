@@ -28,6 +28,7 @@ class StreamWorker(threading.Thread):
         detect_lock: threading.Lock | None = None,
         tracker: PlateTracker | None = None,
         vehicle_analyzer: VehicleAnalyzer | None = None,
+        alerter=None,
     ) -> None:
         super().__init__(name=f"worker-{stream.name}", daemon=True)
         self.stream = stream
@@ -40,6 +41,8 @@ class StreamWorker(threading.Thread):
         self._tracker = tracker
         # Shared vehicle analyzer (None disables type/color attributes).
         self._vehicle = vehicle_analyzer
+        # Shared alerter (None disables watchlist alerting).
+        self._alerter = alerter
         self._stop = threading.Event()
 
     def stop(self) -> None:
@@ -81,13 +84,15 @@ class StreamWorker(threading.Thread):
                             if self._vehicle is not None
                             else None
                         )
-                        self.recorder.record(
+                        row = self.recorder.record(
                             stream_name=self.stream.name,
                             stream_url=self.stream.url,
                             detection=det,
                             frame=frame,
                             vehicle=info,
                         )
+                        if row is not None and self._alerter is not None:
+                            self._alerter.process(row.id)
                     except Exception as exc:
                         logger.error("Record error on '%s': %s", self.stream.name, exc)
         except Exception as exc:  # pragma: no cover - top-level safety net

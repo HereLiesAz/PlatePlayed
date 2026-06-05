@@ -61,6 +61,11 @@ class Config:
     taxonomy_min_confidence: float = 0.5
     taxonomy_emergency_requires_corroboration: bool = True
 
+    # Watchlist alerting on matching plate sightings.
+    alerts_enabled: bool = True
+    alert_cooldown_seconds: int = 300
+    alert_webhook_url: str | None = None
+
     # Dashboard / API HTTP Basic auth. Auth is enforced when a password is set.
     auth_username: str = "admin"
     auth_password: str | None = None
@@ -97,6 +102,7 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
     vehicle = data.get("vehicle") or {}
     make_model = data.get("make_model") or {}
     taxonomy = data.get("taxonomy") or {}
+    alerts = data.get("alerts") or {}
     auth = data.get("auth") or {}
 
     config = Config(
@@ -145,6 +151,11 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
                 Config.taxonomy_emergency_requires_corroboration,
             )
         ),
+        alerts_enabled=bool(alerts.get("enabled", Config.alerts_enabled)),
+        alert_cooldown_seconds=int(
+            alerts.get("cooldown_seconds", Config.alert_cooldown_seconds)
+        ),
+        alert_webhook_url=alerts.get("webhook_url", Config.alert_webhook_url),
         auth_username=auth.get("username", Config.auth_username),
         auth_password=auth.get("password", Config.auth_password),
         streams=streams,
@@ -157,5 +168,8 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
     # Credentials are most safely supplied via the environment.
     config.auth_username = os.environ.get("PLATEPLAYED_AUTH_USERNAME", config.auth_username)
     config.auth_password = os.environ.get("PLATEPLAYED_AUTH_PASSWORD", config.auth_password)
+    config.alert_webhook_url = os.environ.get(
+        "PLATEPLAYED_ALERT_WEBHOOK", config.alert_webhook_url
+    )
 
     return config

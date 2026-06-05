@@ -11,11 +11,13 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
+from . import alerting, analytics
 from .config import load_config
-from .db import Detection, Plate, Stream, init_db
+from .db import Alert, Detection, Plate, Stream, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +119,95 @@ def list_plates(limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, g
                 "sightings": p.sightings,
             }
             for p in rows
+        ]
+
+
+# --- Analytics ------------------------------------------------------------- #
+@app.get("/api/analytics/summary")
+def analytics_summary():
+    with SessionFactory() as session:
+        return analytics.summary(session)
+
+
+@app.get("/api/analytics/top-plates")
+def analytics_top_plates(limit: int = Query(20, ge=1, le=200)):
+    with SessionFactory() as session:
+        return analytics.top_plates(session, limit=limit)
+
+
+@app.get("/api/analytics/cross-stream")
+def analytics_cross_stream(limit: int = Query(20, ge=1, le=200)):
+    with SessionFactory() as session:
+        return analytics.cross_stream_plates(session, limit=limit)
+
+
+@app.get("/api/analytics/hourly")
+def analytics_hourly(stream_id: int | None = None):
+    with SessionFactory() as session:
+        return analytics.hourly_histogram(session, stream_id=stream_id)
+
+
+@app.get("/api/analytics/weekday")
+def analytics_weekday(stream_id: int | None = None):
+    with SessionFactory() as session:
+        return analytics.weekday_histogram(session, stream_id=stream_id)
+
+
+@app.get("/api/analytics/volume")
+def analytics_volume():
+    with SessionFactory() as session:
+        return analytics.volume_by_stream(session)
+
+
+# --- Watchlist + alerts ---------------------------------------------------- #
+class WatchRequest(BaseModel):
+    plate_number: str
+    note: str | None = None
+
+
+@app.get("/api/watchlist")
+def get_watchlist():
+    with SessionFactory() as session:
+        return [
+            {"plate_number": w.plate_number, "note": w.note, "created_at": w.created_at}
+            for w in alerting.list_watch(session)
+        ]
+
+
+@app.post("/api/watchlist")
+def post_watchlist(req: WatchRequest):
+    if not req.plate_number.strip():
+        raise HTTPException(400, "plate_number required")
+    with SessionFactory() as session:
+        entry = alerting.add_watch(session, req.plate_number, req.note)
+        return {"plate_number": entry.plate_number, "note": entry.note, "active": entry.active}
+
+
+@app.delete("/api/watchlist/{plate_number}")
+def delete_watchlist(plate_number: str):
+    with SessionFactory() as session:
+        if not alerting.remove_watch(session, plate_number):
+            raise HTTPException(404, "Not on watchlist")
+        return {"removed": plate_number.upper().strip()}
+
+
+@app.get("/api/alerts")
+def get_alerts(limit: int = Query(50, ge=1, le=500)):
+    with SessionFactory() as session:
+        rows = (
+            session.query(Alert).order_by(Alert.created_at.desc()).limit(limit).all()
+        )
+        return [
+            {
+                "id": a.id,
+                "plate_number": a.plate_number,
+                "stream_id": a.stream_id,
+                "detection_id": a.detection_id,
+                "message": a.message,
+                "created_at": a.created_at,
+                "delivered": a.delivered,
+            }
+            for a in rows
         ]
 
 

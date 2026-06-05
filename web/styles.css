@@ -23,6 +23,26 @@ body {
 .stats { display: flex; gap: 1.25rem; color: var(--muted); font-size: 0.9rem; }
 .stats strong { color: var(--fg); }
 .container { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+.panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    background: var(--card);
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+@media (max-width: 640px) { .panel { grid-template-columns: 1fr; } }
+.panel h2 { margin: 0 0 0.6rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+.top-plates { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; }
+.top-plates li { margin: 0.15rem 0; }
+.top-plates .tp-plate { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+.top-plates .tp-count { color: var(--muted); font-size: 0.78rem; margin-left: 0.4rem; }
+.top-plates .muted, .muted { color: var(--muted); }
+.hourly { display: flex; align-items: flex-end; gap: 2px; height: 80px; }
+.hourly .bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.hourly .bar-fill { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 1px; }
 .controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
 #search {
     flex: 1;
@@ -60,7 +80,21 @@ body {
     font-size: 1.15rem;
     font-weight: 700;
     letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
+.card .watch {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+.card .watch.on { color: #fbbf24; }
 .card .meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.5; }
 .card .conf { color: var(--accent); }
 .card .vehicle { color: #cbd5e1; text-transform: capitalize; }

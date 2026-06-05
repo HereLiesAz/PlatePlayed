@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -90,6 +91,36 @@ class Detection(Base):
 
     plate: Mapped["Plate"] = relationship(back_populates="detections")
     stream: Mapped["Stream"] = relationship(back_populates="detections")
+
+
+class Watchlist(Base):
+    """Plates of interest. A match triggers an alert when seen."""
+
+    __tablename__ = "watchlist"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plate_number: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    note: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class Alert(Base):
+    """A fired alert for a watchlisted plate sighting."""
+
+    __tablename__ = "alerts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plate_number: Mapped[str] = mapped_column(String(32), index=True)
+    detection_id: Mapped[int | None] = mapped_column(
+        ForeignKey("detections.id"), nullable=True, index=True
+    )
+    stream_id: Mapped[int | None] = mapped_column(
+        ForeignKey("streams.id"), nullable=True
+    )
+    message: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+    delivered: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 def make_engine(database_url: str):

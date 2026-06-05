@@ -64,6 +64,14 @@ taxonomy:
   min_confidence: 0.5
   emergency_requires_corroboration: true
 
+# Watchlist alerting. When a plate on the watchlist (managed from the dashboard
+# or POST /api/watchlist) is seen, an alert is logged and POSTed to webhook_url
+# if set. At most one alert per plate per cooldown window.
+alerts:
+  enabled: true
+  cooldown_seconds: 300
+  webhook_url: null         # or PLATEPLAYED_ALERT_WEBHOOK env var
+
 # Dashboard / API authentication (HTTP Basic). Auth is enforced only when a
 # password is set. Prefer the PLATEPLAYED_AUTH_USERNAME / PLATEPLAYED_AUTH_PASSWORD
 # environment variables over committing credentials here.
