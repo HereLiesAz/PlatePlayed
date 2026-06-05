@@ -71,12 +71,13 @@ auth:
   username: "admin"
   password: null           # e.g. "change-me" — leave null to disable auth
 
-# YouTube live streams to watch. `name` is a friendly label stored in the DB.
+# YouTube live streams to watch. `name` is a friendly label stored in the DB —
+# rename these to whatever each camera actually shows.
 streams:
-  - name: "Jackson Hole Town Square"
-    url: "https://www.youtube.com/watch?v=1EiC9bvVGnk"
+  - name: "Stream 1"
+    url: "https://www.youtube.com/watch?v=Ksrleaxxxhw"
     enabled: true
 
-  - name: "Example Traffic Cam"
-    url: "https://www.youtube.com/watch?v=YOUR_STREAM_ID"
-    enabled: false
+  - name: "Stream 2"
+    url: "https://www.youtube.com/watch?v=C32EiZiQPkQ"
+    enabled: true
