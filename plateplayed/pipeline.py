@@ -11,6 +11,7 @@ from .db import init_db
 from .detector import build_detector
 from .recorder import Recorder
 from .storage import ScreenshotStore
+from .tracking import PlateTracker
 from .worker import StreamWorker
 
 logger = logging.getLogger(__name__)
@@ -46,12 +47,22 @@ class Pipeline:
             len(streams), getattr(self.detector, "name", "unknown"),
         )
         for stream in streams:
+            tracker = (
+                PlateTracker(
+                    iou_threshold=self.config.track_iou_threshold,
+                    min_hits=self.config.track_min_hits,
+                    max_age_seconds=self.config.track_max_age_seconds,
+                )
+                if self.config.tracking_enabled
+                else None
+            )
             worker = StreamWorker(
                 stream,
                 self.detector,
                 self.recorder,
                 sample_interval_seconds=self.config.sample_interval_seconds,
                 detect_lock=self._detect_lock,
+                tracker=tracker,
             )
             worker.start()
             self._workers.append(worker)

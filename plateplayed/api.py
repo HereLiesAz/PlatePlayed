@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import base64
+import logging
 import os
+import secrets
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -14,12 +17,45 @@ from sqlalchemy.orm import joinedload
 from .config import load_config
 from .db import Detection, Plate, Stream, init_db
 
+logger = logging.getLogger(__name__)
+
 config = load_config(os.environ.get("PLATEPLAYED_CONFIG", "config.yaml"))
 SessionFactory = init_db(config.database_url)
 SCREENSHOT_ROOT = Path(config.screenshot_dir).resolve()
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 app = FastAPI(title="PlatePlayed", version="0.1.0")
+
+
+def _check_basic_auth(header: str) -> bool:
+    """Validate an ``Authorization: Basic`` header against configured creds."""
+    if not header.startswith("Basic "):
+        return False
+    try:
+        user, _, password = base64.b64decode(header[6:]).decode("utf-8").partition(":")
+    except Exception:
+        return False
+    return secrets.compare_digest(user, config.auth_username) and secrets.compare_digest(
+        password, config.auth_password or ""
+    )
+
+
+if config.auth_password:
+    @app.middleware("http")
+    async def require_auth(request: Request, call_next):
+        """Gate every route (API, screenshots, dashboard) behind Basic auth."""
+        if _check_basic_auth(request.headers.get("Authorization", "")):
+            return await call_next(request)
+        return Response(
+            "Unauthorized",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="PlatePlayed"'},
+        )
+else:
+    logger.warning(
+        "API auth is DISABLED — the dashboard and all logged plate data are "
+        "publicly accessible. Set auth.password (or PLATEPLAYED_AUTH_PASSWORD)."
+    )
 
 
 @app.get("/api/stats")

@@ -25,6 +25,22 @@ dedup_cooldown_seconds: 30
 # Save a cropped close-up of each detected plate alongside the full frame.
 save_plate_crops: true
 
+# Multi-frame tracking + best-read voting. Groups a plate across consecutive
+# frames so one car becomes one voted read, and suppresses one-frame false
+# positives. Disable to log every raw per-frame detection instead.
+tracking:
+  enabled: true
+  min_hits: 2              # frames a plate must appear in before it's logged
+  iou_threshold: 0.3       # box overlap to treat detections as the same car
+  max_age_seconds: 5.0     # forget a track after this long unseen
+
+# Dashboard / API authentication (HTTP Basic). Auth is enforced only when a
+# password is set. Prefer the PLATEPLAYED_AUTH_USERNAME / PLATEPLAYED_AUTH_PASSWORD
+# environment variables over committing credentials here.
+auth:
+  username: "admin"
+  password: null           # e.g. "change-me" — leave null to disable auth
+
 # YouTube live streams to watch. `name` is a friendly label stored in the DB.
 streams:
   - name: "Jackson Hole Town Square"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 
 from .config import load_config
@@ -32,9 +33,22 @@ def cmd_init_db(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_serve(args: argparse.Namespace) -> int:
-    import os
+def cmd_migrate(args: argparse.Namespace) -> int:
+    from pathlib import Path
 
+    from alembic import command
+    from alembic.config import Config as AlembicConfig
+
+    config = load_config(args.config)
+    os.environ["PLATEPLAYED_DB_URL"] = config.database_url
+    os.environ["PLATEPLAYED_CONFIG"] = args.config
+    ini = Path(__file__).resolve().parent.parent / "alembic.ini"
+    command.upgrade(AlembicConfig(str(ini)), "head")
+    print(f"Migrations applied to {config.database_url}")
+    return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
 
     os.environ["PLATEPLAYED_CONFIG"] = args.config
@@ -57,6 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("run", parents=[common], help="Start watching streams and logging plates")
     sub.add_parser("init-db", parents=[common], help="Create database tables and exit")
+    sub.add_parser("migrate", parents=[common], help="Apply Alembic migrations to the database")
 
     serve = sub.add_parser("serve", parents=[common], help="Run the web dashboard / API")
     serve.add_argument("--host", default="127.0.0.1")
@@ -74,6 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     dispatch = {
         "run": cmd_run,
         "init-db": cmd_init_db,
+        "migrate": cmd_migrate,
         "serve": cmd_serve,
     }
     return dispatch[args.command](args)

@@ -32,6 +32,17 @@ class Config:
     sample_interval_seconds: float = 2.0
     dedup_cooldown_seconds: int = 30
     save_plate_crops: bool = True
+
+    # Multi-frame tracking + best-read voting.
+    tracking_enabled: bool = True
+    track_min_hits: int = 2
+    track_iou_threshold: float = 0.3
+    track_max_age_seconds: float = 5.0
+
+    # Dashboard / API HTTP Basic auth. Auth is enforced when a password is set.
+    auth_username: str = "admin"
+    auth_password: str | None = None
+
     streams: list[StreamConfig] = field(default_factory=list)
 
     @property
@@ -60,6 +71,9 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
         for s in data.get("streams", [])
     ]
 
+    tracking = data.get("tracking") or {}
+    auth = data.get("auth") or {}
+
     config = Config(
         database_url=data.get("database_url", Config.database_url),
         screenshot_dir=data.get("screenshot_dir", Config.screenshot_dir),
@@ -72,11 +86,25 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
             data.get("dedup_cooldown_seconds", Config.dedup_cooldown_seconds)
         ),
         save_plate_crops=bool(data.get("save_plate_crops", Config.save_plate_crops)),
+        tracking_enabled=bool(tracking.get("enabled", Config.tracking_enabled)),
+        track_min_hits=int(tracking.get("min_hits", Config.track_min_hits)),
+        track_iou_threshold=float(
+            tracking.get("iou_threshold", Config.track_iou_threshold)
+        ),
+        track_max_age_seconds=float(
+            tracking.get("max_age_seconds", Config.track_max_age_seconds)
+        ),
+        auth_username=auth.get("username", Config.auth_username),
+        auth_password=auth.get("password", Config.auth_password),
         streams=streams,
     )
 
     env_db = os.environ.get("PLATEPLAYED_DB_URL")
     if env_db:
         config.database_url = env_db
+
+    # Credentials are most safely supplied via the environment.
+    config.auth_username = os.environ.get("PLATEPLAYED_AUTH_USERNAME", config.auth_username)
+    config.auth_password = os.environ.get("PLATEPLAYED_AUTH_PASSWORD", config.auth_password)
 
     return config

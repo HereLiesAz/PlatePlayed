@@ -17,13 +17,17 @@ YouTube live streams ──► frame sampler ──► ALPR model ──► reco
   reconnecting automatically when a live URL rotates.
 - **Detects + reads plates** with [`fast-alpr`](https://github.com/ankandrew/fast-alpr)
   (YOLO plate detector + ONNX OCR, CPU-friendly).
+- **Tracks plates across frames** — groups a car's detections over consecutive
+  frames, votes on the best OCR read (`ABC123` beats a one-off `ABCl23`), and
+  ignores one-frame false positives.
 - **Logs to a database** (SQLite by default, Postgres by config) with three
   tables: `streams`, `plates` (unique plates + counts), and `detections`
   (every sighting, with timestamp and screenshot paths).
 - **Saves screenshots** — the full frame plus a cropped close-up of each plate.
 - **De-duplicates** — a parked or slow car becomes a single detection row whose
   `last_seen` / `count` update, instead of thousands of rows.
-- **Serves a live dashboard** — filter by plate, see thumbnails and confidence.
+- **Serves a live dashboard** — filter by plate, see thumbnails and confidence;
+  protected by HTTP Basic auth when a password is configured.
 
 ## Quick start
 
@@ -67,9 +71,42 @@ All behaviour is driven by `config.yaml` (see `config.example.yaml`):
 | `sample_interval_seconds` | Seconds between sampled frames per stream. |
 | `dedup_cooldown_seconds` | Window for collapsing repeat sightings. |
 | `save_plate_crops` | Also save a cropped close-up of each plate. |
+| `tracking.enabled` | Multi-frame tracking + best-read voting. |
+| `tracking.min_hits` | Frames a plate must appear in before it's logged. |
+| `tracking.iou_threshold` | Box overlap to treat detections as the same car. |
+| `tracking.max_age_seconds` | Forget a track after this long unseen. |
+| `auth.username` / `auth.password` | HTTP Basic creds for the dashboard/API. |
 | `streams` | List of `{ name, url, enabled }` YouTube streams. |
 
-`PLATEPLAYED_DB_URL` overrides `database_url` from the environment.
+Environment overrides: `PLATEPLAYED_DB_URL` (database), and
+`PLATEPLAYED_AUTH_USERNAME` / `PLATEPLAYED_AUTH_PASSWORD` (credentials — the
+preferred way to supply them, so secrets stay out of `config.yaml`).
+
+## Authentication
+
+The dashboard and API are **unauthenticated by default** (handy for local dev,
+which prints a warning). Set a password to require HTTP Basic auth on every
+route — API, screenshots, and the dashboard:
+
+```bash
+export PLATEPLAYED_AUTH_USERNAME=watcher
+export PLATEPLAYED_AUTH_PASSWORD=change-me
+plateplayed serve
+```
+
+Because it's standard Basic auth, the browser prompts once and reuses the
+credentials for the dashboard's API calls. Put it behind HTTPS (a reverse
+proxy) before exposing it beyond localhost.
+
+## Database migrations
+
+Schema changes are managed with **Alembic**. For a quick local start,
+`plateplayed init-db` just creates the current tables. For anything long-lived,
+use migrations so the schema can evolve safely:
+
+```bash
+plateplayed migrate          # apply all migrations (alembic upgrade head)
+```
 
 ## The ML model
 
@@ -83,6 +120,11 @@ small `Detector` interface (`plateplayed/detector.py`), so you can swap in a
 different ALPR backend or a custom YOLO+OCR pipeline without touching the rest
 of the system. When the ML deps aren't installed, a **stub detector** keeps the
 streams, database, API, and dashboard fully functional for development.
+
+On top of raw detection, a per-stream **tracker** (`plateplayed/tracking.py`)
+matches detections across consecutive frames by box overlap, accumulates the
+reads of each car, and emits a single voted consensus plate — improving
+accuracy and cutting duplicate/false rows before anything reaches the database.
 
 ## Database schema
 
@@ -105,12 +147,15 @@ streams, database, API, and dashboard fully functional for development.
 ## Development
 
 ```bash
-pip install -r requirements.txt pytest
-pytest                       # 14 tests, no ML or network required
+pip install -r requirements.txt
+pip install -e ".[dev]"
+pytest                       # 25 tests, no ML or network required
 ```
 
-The core logic (config, database, de-duplication, screenshot storage) is tested
-against in-memory SQLite with a stub detector — fast and offline.
+The core logic (config, database, de-duplication, tracking/voting, screenshot
+storage, auth, and migrations) is tested against in-memory/file SQLite with a
+stub detector — fast and offline. **GitHub Actions** (`.github/workflows/ci.yml`)
+runs the suite on every push and pull request across Python 3.10–3.12.
 
 ## Responsible use
 
