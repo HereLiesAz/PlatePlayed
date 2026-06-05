@@ -43,10 +43,13 @@ YouTube live streams ──► frame sampler ──► ALPR model ──► reco
 # 2. Add your streams
 cp config.example.yaml config.yaml   # then edit `streams:`
 
-# 3. Start watching + logging
+# 3. Sanity-check the streams (resolution / FPS, or why they fail)
+plateplayed check
+
+# 4. Start watching + logging
 plateplayed run
 
-# 4. In another terminal, open the dashboard
+# 5. In another terminal, open the dashboard
 plateplayed serve   # http://127.0.0.1:8000
 ```
 
