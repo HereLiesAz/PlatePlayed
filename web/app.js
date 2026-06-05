@@ -55,7 +55,7 @@ function cardHTML(d) {
                 <div class="meta">
                     <span class="conf">${Math.round((d.confidence || 0) * 100)}% conf</span><br>
                     ${seen}<br>
-                    stream #${d.stream_id}
+                    ${escapeHTML(d.stream_name || ("stream #" + d.stream_id))}
                 </div>
             </div>
         </article>`;
