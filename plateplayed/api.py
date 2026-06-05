@@ -152,6 +152,8 @@ def _detection_json(d: Detection) -> dict:
         "stream_id": d.stream_id,
         "stream_name": d.stream.name if d.stream else None,
         "stream_url": d.stream.url if d.stream else None,
+        "vehicle_type": d.vehicle_type,
+        "vehicle_color": d.vehicle_color,
         "frame_url": f"/screenshots/{d.id}/frame" if d.frame_path else None,
         "plate_url": f"/screenshots/{d.id}/plate" if d.plate_crop_path else None,
     }

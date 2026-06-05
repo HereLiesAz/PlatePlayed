@@ -9,12 +9,16 @@ from __future__ import annotations
 import logging
 import threading
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from .db import Detection, Plate, get_or_create_stream, utcnow
 from .detector import PlateDetection
 from .storage import ScreenshotStore
+
+if TYPE_CHECKING:
+    from .vehicle import VehicleInfo
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +49,7 @@ class Recorder:
         stream_url: str,
         detection: PlateDetection,
         frame: np.ndarray | None = None,
+        vehicle: "VehicleInfo | None" = None,
     ) -> Detection | None:
         """Record one detection. Returns the Detection row, or None if dropped.
 
@@ -93,6 +98,11 @@ class Recorder:
                 recent.count += 1
                 if detection.confidence > recent.confidence:
                     recent.confidence = detection.confidence
+                # Backfill vehicle attributes if we didn't have them before.
+                if vehicle is not None and recent.vehicle_type is None:
+                    recent.vehicle_type = vehicle.type
+                    recent.vehicle_color = vehicle.color
+                    recent.vehicle_confidence = vehicle.confidence
                 session.commit()
                 return recent
 
@@ -116,6 +126,9 @@ class Recorder:
                 count=1,
                 frame_path=frame_path,
                 plate_crop_path=crop_path,
+                vehicle_type=vehicle.type if vehicle else None,
+                vehicle_color=vehicle.color if vehicle else None,
+                vehicle_confidence=vehicle.confidence if vehicle else None,
             )
             session.add(row)
             session.commit()

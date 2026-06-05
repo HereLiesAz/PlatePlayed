@@ -116,6 +116,27 @@ def test_concurrent_same_plate_no_integrity_error(tmp_path):
         assert s.query(Plate).count() == 1  # exactly one plate row, no dupes
 
 
+def test_vehicle_attributes_are_persisted(recorder):
+    from plateplayed.vehicle import VehicleInfo
+
+    info = VehicleInfo(type="truck", color="red", confidence=0.88)
+    row = recorder.record("Cam 1", "http://s/1", det(), frame=None, vehicle=info)
+    assert row.vehicle_type == "truck"
+    assert row.vehicle_color == "red"
+    assert row.vehicle_confidence == 0.88
+
+
+def test_vehicle_attributes_backfilled_on_repeat(recorder):
+    from plateplayed.vehicle import VehicleInfo
+
+    recorder.record("Cam 1", "http://s/1", det(), frame=None, vehicle=None)
+    info = VehicleInfo(type="car", color="blue", confidence=0.7)
+    row = recorder.record("Cam 1", "http://s/1", det(), frame=None, vehicle=info)
+    assert row.count == 2  # same detection row (within cooldown)
+    assert row.vehicle_type == "car"
+    assert row.vehicle_color == "blue"
+
+
 def test_frame_is_saved_when_provided(recorder):
     frame = np.zeros((20, 20, 3), dtype=np.uint8)
     row = recorder.record("Cam 1", "http://s/1", det(), frame=frame)

@@ -63,5 +63,6 @@ body {
 }
 .card .meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.5; }
 .card .conf { color: var(--accent); }
+.card .vehicle { color: #cbd5e1; text-transform: capitalize; }
 .empty { color: var(--muted); text-align: center; margin-top: 4rem; }
 code { background: #222; padding: 0.1rem 0.35rem; border-radius: 4px; }

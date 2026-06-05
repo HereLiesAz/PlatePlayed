@@ -34,6 +34,15 @@ tracking:
   iou_threshold: 0.3       # box overlap to treat detections as the same car
   max_age_seconds: 5.0     # forget a track after this long unseen
 
+# Vehicle attributes: tag each plate with its vehicle's type and color.
+# Type detection needs the YOLO model from requirements-ml.txt; when it's
+# unavailable, plates are still logged but without type/color.
+vehicle:
+  enabled: true
+  detector: "auto"          # auto | yolo | stub
+  model: "yolov8n.pt"       # ultralytics COCO weights (downloaded on first run)
+  min_confidence: 0.4
+
 # Dashboard / API authentication (HTTP Basic). Auth is enforced only when a
 # password is set. Prefer the PLATEPLAYED_AUTH_USERNAME / PLATEPLAYED_AUTH_PASSWORD
 # environment variables over committing credentials here.

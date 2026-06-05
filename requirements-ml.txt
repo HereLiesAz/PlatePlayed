@@ -7,3 +7,5 @@
 #
 fast-alpr>=0.1.0
 onnxruntime>=1.16.0
+# Vehicle type detection (car/truck/bus/motorcycle) via a YOLO COCO model.
+ultralytics>=8.0.0

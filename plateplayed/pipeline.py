@@ -12,6 +12,7 @@ from .detector import build_detector
 from .recorder import Recorder
 from .storage import ScreenshotStore
 from .tracking import PlateTracker
+from .vehicle import VehicleAnalyzer, build_vehicle_detector
 from .worker import StreamWorker
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,14 @@ class Pipeline:
             dedup_cooldown_seconds=config.dedup_cooldown_seconds,
             save_plate_crops=config.save_plate_crops,
         )
+        self.vehicle_analyzer = None
+        if config.vehicle_enabled:
+            detector = build_vehicle_detector(
+                config.vehicle_detector,
+                model=config.vehicle_model,
+                min_confidence=config.vehicle_min_confidence,
+            )
+            self.vehicle_analyzer = VehicleAnalyzer(detector)
         self._detect_lock = threading.Lock()
         self._workers: list[StreamWorker] = []
 
@@ -63,6 +72,7 @@ class Pipeline:
                 sample_interval_seconds=self.config.sample_interval_seconds,
                 detect_lock=self._detect_lock,
                 tracker=tracker,
+                vehicle_analyzer=self.vehicle_analyzer,
             )
             worker.start()
             self._workers.append(worker)

@@ -20,6 +20,8 @@ YouTube live streams ──► frame sampler ──► ALPR model ──► reco
 - **Tracks plates across frames** — groups a car's detections over consecutive
   frames, votes on the best OCR read (`ABC123` beats a one-off `ABCl23`), and
   ignores one-frame false positives.
+- **Tags the vehicle** — type (car / truck / bus / motorcycle, via a YOLO COCO
+  model) and dominant color, linked to each plate by its bounding box.
 - **Logs to a database** (SQLite by default, Postgres by config) with three
   tables: `streams`, `plates` (unique plates + counts), and `detections`
   (every sighting, with timestamp and screenshot paths).
@@ -75,6 +77,10 @@ All behaviour is driven by `config.yaml` (see `config.example.yaml`):
 | `tracking.min_hits` | Frames a plate must appear in before it's logged. |
 | `tracking.iou_threshold` | Box overlap to treat detections as the same car. |
 | `tracking.max_age_seconds` | Forget a track after this long unseen. |
+| `vehicle.enabled` | Tag detections with vehicle type + color. |
+| `vehicle.detector` | `auto` (YOLO if installed, else off), `yolo`, or `stub`. |
+| `vehicle.model` | ultralytics COCO weights (default `yolov8n.pt`). |
+| `vehicle.min_confidence` | Minimum vehicle-detection confidence. |
 | `auth.username` / `auth.password` | HTTP Basic creds for the dashboard/API. |
 | `streams` | List of `{ name, url, enabled }` YouTube streams. |
 
@@ -126,12 +132,21 @@ matches detections across consecutive frames by box overlap, accumulates the
 reads of each car, and emits a single voted consensus plate — improving
 accuracy and cutting duplicate/false rows before anything reaches the database.
 
+**Vehicle attributes** (`plateplayed/vehicle.py`) add a second layer: a YOLO
+COCO model detects vehicles in the frame, each plate is linked to the vehicle
+box that contains it, the vehicle's **type** (car / truck / bus / motorcycle)
+is read from the detector, and its **color** is named from an HSV analysis of
+the crop (pure OpenCV — no model needed for color). Type detection needs the ML
+extras; without them, plates are still logged, just without type/color. Color
+naming and box-association are unit-tested offline.
+
 ## Database schema
 
 - **`streams`** — `id, name, url, created_at`
 - **`plates`** — `id, plate_number (unique), first_seen, last_seen, sightings`
 - **`detections`** — `id, plate_id, stream_id, plate_number, confidence,
-  seen_at, last_seen_at, count, frame_path, plate_crop_path`
+  seen_at, last_seen_at, count, frame_path, plate_crop_path,
+  vehicle_type, vehicle_color, vehicle_confidence`
 
 ## API
 
@@ -149,12 +164,12 @@ accuracy and cutting duplicate/false rows before anything reaches the database.
 ```bash
 pip install -r requirements.txt
 pip install -e ".[dev]"
-pytest                       # 25 tests, no ML or network required
+pytest                       # 34 tests, no ML or network required
 ```
 
-The core logic (config, database, de-duplication, tracking/voting, screenshot
-storage, auth, and migrations) is tested against in-memory/file SQLite with a
-stub detector — fast and offline. **GitHub Actions** (`.github/workflows/ci.yml`)
+The core logic (config, database, de-duplication, tracking/voting, vehicle
+color + association, screenshot storage, auth, and migrations) is tested against
+in-memory/file SQLite with a stub detector — fast and offline. **GitHub Actions** (`.github/workflows/ci.yml`)
 runs the suite on every push and pull request across Python 3.10–3.12.
 
 ## Responsible use

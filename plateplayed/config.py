@@ -39,6 +39,13 @@ class Config:
     track_iou_threshold: float = 0.3
     track_max_age_seconds: float = 5.0
 
+    # Vehicle attributes (type + color). Needs the YOLO model from the ML extras;
+    # falls back to "no attributes" when unavailable.
+    vehicle_enabled: bool = True
+    vehicle_detector: str = "auto"
+    vehicle_model: str = "yolov8n.pt"
+    vehicle_min_confidence: float = 0.4
+
     # Dashboard / API HTTP Basic auth. Auth is enforced when a password is set.
     auth_username: str = "admin"
     auth_password: str | None = None
@@ -72,6 +79,7 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
     ]
 
     tracking = data.get("tracking") or {}
+    vehicle = data.get("vehicle") or {}
     auth = data.get("auth") or {}
 
     config = Config(
@@ -93,6 +101,12 @@ def load_config(path: str | os.PathLike[str] = "config.yaml") -> Config:
         ),
         track_max_age_seconds=float(
             tracking.get("max_age_seconds", Config.track_max_age_seconds)
+        ),
+        vehicle_enabled=bool(vehicle.get("enabled", Config.vehicle_enabled)),
+        vehicle_detector=vehicle.get("detector", Config.vehicle_detector),
+        vehicle_model=vehicle.get("model", Config.vehicle_model),
+        vehicle_min_confidence=float(
+            vehicle.get("min_confidence", Config.vehicle_min_confidence)
         ),
         auth_username=auth.get("username", Config.auth_username),
         auth_password=auth.get("password", Config.auth_password),

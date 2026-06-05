@@ -47,6 +47,8 @@ function cardHTML(d) {
         ? `<img loading="lazy" src="${img}" alt="${escapeHTML(d.plate_number)}">`
         : `<div class="card-noimg"></div>`;
     const seen = d.count > 1 ? `${fmt(d.last_seen_at)} · seen ×${d.count}` : fmt(d.seen_at);
+    const vehicle = [d.vehicle_color, d.vehicle_type].filter(Boolean).join(" ");
+    const vehicleLine = vehicle ? `<span class="vehicle">${escapeHTML(vehicle)}</span><br>` : "";
     return `
         <article class="card">
             ${thumb}
@@ -54,6 +56,7 @@ function cardHTML(d) {
                 <div class="plate">${escapeHTML(d.plate_number)}</div>
                 <div class="meta">
                     <span class="conf">${Math.round((d.confidence || 0) * 100)}% conf</span><br>
+                    ${vehicleLine}
                     ${seen}<br>
                     ${escapeHTML(d.stream_name || ("stream #" + d.stream_id))}
                 </div>

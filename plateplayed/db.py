@@ -77,6 +77,11 @@ class Detection(Base):
     frame_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
     plate_crop_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
+    # Vehicle attributes (populated when the vehicle detector is enabled).
+    vehicle_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    vehicle_color: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    vehicle_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+
     plate: Mapped["Plate"] = relationship(back_populates="detections")
     stream: Mapped["Stream"] = relationship(back_populates="detections")
 

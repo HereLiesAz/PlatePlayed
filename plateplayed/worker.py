@@ -11,6 +11,7 @@ from .detector import Detector
 from .recorder import Recorder
 from .stream import iter_frames
 from .tracking import PlateTracker
+from .vehicle import VehicleAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class StreamWorker(threading.Thread):
         sample_interval_seconds: float = 2.0,
         detect_lock: threading.Lock | None = None,
         tracker: PlateTracker | None = None,
+        vehicle_analyzer: VehicleAnalyzer | None = None,
     ) -> None:
         super().__init__(name=f"worker-{stream.name}", daemon=True)
         self.stream = stream
@@ -36,6 +38,8 @@ class StreamWorker(threading.Thread):
         self._detect_lock = detect_lock or threading.Lock()
         # Per-stream tracker (None disables multi-frame voting).
         self._tracker = tracker
+        # Shared vehicle analyzer (None disables type/color attributes).
+        self._vehicle = vehicle_analyzer
         self._stop = threading.Event()
 
     def stop(self) -> None:
@@ -60,13 +64,29 @@ class StreamWorker(threading.Thread):
                 if self._tracker is not None:
                     detections = self._tracker.update(detections, time.monotonic())
 
+                # Detect vehicles once per frame, only when there's plate work.
+                vehicles = []
+                if detections and self._vehicle is not None:
+                    try:
+                        with self._detect_lock:
+                            vehicles = self._vehicle.detect_vehicles(frame)
+                    except Exception as exc:
+                        logger.error("Vehicle detection error on '%s': %s",
+                                     self.stream.name, exc)
+
                 for det in detections:
                     try:
+                        info = (
+                            self._vehicle.associate(det.box, vehicles, frame)
+                            if self._vehicle is not None
+                            else None
+                        )
                         self.recorder.record(
                             stream_name=self.stream.name,
                             stream_url=self.stream.url,
                             detection=det,
                             frame=frame,
+                            vehicle=info,
                         )
                     except Exception as exc:
                         logger.error("Record error on '%s': %s", self.stream.name, exc)
