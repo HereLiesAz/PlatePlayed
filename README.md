@@ -172,6 +172,19 @@ color + association, screenshot storage, auth, and migrations) is tested against
 in-memory/file SQLite with a stub detector — fast and offline. **GitHub Actions** (`.github/workflows/ci.yml`)
 runs the suite on every push and pull request across Python 3.10–3.12.
 
+## Roadmap
+
+Design docs for proposed work live in [`docs/`](docs/):
+
+- [Make / model recognition](docs/scoping-make-model.md) — fine-grained
+  classification of the vehicle crop.
+- [Rich vehicle taxonomy](docs/scoping-vehicle-taxonomy.md) — emergency /
+  construction / heavy / commercial categories beyond COCO.
+
+Both extend `plateplayed/vehicle.py`, are gated behind opt-in config, and ship
+an evaluation harness — because the deciding factor for each is measured
+accuracy on real street-cam footage, not benchmark numbers.
+
 ## Responsible use
 
 PlatePlayed reads plates from **public** video. License-plate data can be
