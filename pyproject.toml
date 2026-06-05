@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plateplayed"
+version = "0.1.0"
+description = "Watch YouTube live streams, detect license plates with ML, and log them to a database with screenshots."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "HereLiesAz" }]
+dependencies = [
+    "yt-dlp>=2024.1.0",
+    "opencv-python-headless>=4.8.0",
+    "numpy>=1.24.0",
+    "SQLAlchemy>=2.0.0",
+    "PyYAML>=6.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "Pillow>=10.0.0",
+    "alembic>=1.13.0",
+]
+
+[project.optional-dependencies]
+ml = ["fast-alpr>=0.1.0", "onnxruntime>=1.16.0"]
+dev = ["pytest>=7.0", "httpx>=0.27.0"]
+
+[project.scripts]
+plateplayed = "plateplayed.cli:main"
+
+[tool.setuptools]
+packages = ["plateplayed"]

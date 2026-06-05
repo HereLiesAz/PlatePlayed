@@ -1,0 +1,91 @@
+# PlatePlayed configuration.
+# Copy to `config.yaml` and edit. Environment overrides: PLATEPLAYED_DB_URL.
+
+# SQLAlchemy database URL. SQLite by default (file created on first run).
+# For Postgres: postgresql+psycopg://user:pass@host:5432/plateplayed
+database_url: "sqlite:///data/plateplayed.db"
+
+# Where full-frame and cropped-plate screenshots are written.
+screenshot_dir: "data/screenshots"
+
+# Detection engine: "fast-alpr" (real ML) or "stub" (no-op, for testing).
+# "auto" uses fast-alpr if installed, otherwise falls back to the stub.
+detector: "auto"
+
+# Minimum OCR confidence (0..1) required to log a plate.
+min_confidence: 0.55
+
+# Seconds between sampled frames per stream. Lower = more thorough, more CPU.
+sample_interval_seconds: 2.0
+
+# Don't log the same plate from the same stream more often than this (seconds).
+# A parked or slow car stays one detection row whose `last_seen`/`count` update.
+dedup_cooldown_seconds: 30
+
+# Save a cropped close-up of each detected plate alongside the full frame.
+save_plate_crops: true
+
+# Multi-frame tracking + best-read voting. Groups a plate across consecutive
+# frames so one car becomes one voted read, and suppresses one-frame false
+# positives. Disable to log every raw per-frame detection instead.
+tracking:
+  enabled: true
+  min_hits: 2              # frames a plate must appear in before it's logged
+  iou_threshold: 0.3       # box overlap to treat detections as the same car
+  max_age_seconds: 5.0     # forget a track after this long unseen
+
+# Vehicle attributes: tag each plate with its vehicle's type and color.
+# Type detection needs the YOLO model from requirements-ml.txt; when it's
+# unavailable, plates are still logged but without type/color.
+vehicle:
+  enabled: true
+  detector: "auto"          # auto | yolo | stub
+  model: "yolov8n.pt"       # ultralytics COCO weights (downloaded on first run)
+  min_confidence: 0.4
+
+# Make/model recognition (Phase 0 — interface + stub only; no model yet).
+# Needs vehicle.enabled. See docs/scoping-make-model.md. Leaving enabled:false
+# keeps make/model null; "onnx"/"api" backends raise until implemented.
+make_model:
+  enabled: false
+  backend: "auto"           # auto | onnx | api | stub
+  model_path: null
+  min_confidence: 0.5
+  region: null              # e.g. "US" — scopes the taxonomy/fleet
+
+# Rich vehicle taxonomy (Phase 0 — interface + stub only; no model yet).
+# Categories like police / ambulance / dump_truck / excavator. Needs
+# vehicle.enabled. See docs/scoping-vehicle-taxonomy.md.
+taxonomy:
+  enabled: false
+  backend: "auto"           # auto | onnx | stub
+  model_path: null
+  version: "v1"
+  min_confidence: 0.5
+  emergency_requires_corroboration: true
+
+# Watchlist alerting. When a plate on the watchlist (managed from the dashboard
+# or POST /api/watchlist) is seen, an alert is logged and POSTed to webhook_url
+# if set. At most one alert per plate per cooldown window.
+alerts:
+  enabled: true
+  cooldown_seconds: 300
+  webhook_url: null         # or PLATEPLAYED_ALERT_WEBHOOK env var
+
+# Dashboard / API authentication (HTTP Basic). Auth is enforced only when a
+# password is set. Prefer the PLATEPLAYED_AUTH_USERNAME / PLATEPLAYED_AUTH_PASSWORD
+# environment variables over committing credentials here.
+auth:
+  username: "admin"
+  password: null           # e.g. "change-me" — leave null to disable auth
+
+# YouTube live streams to watch. `name` is a friendly label stored in the DB —
+# rename these to whatever each camera actually shows.
+streams:
+  - name: "Stream 1"
+    url: "https://www.youtube.com/watch?v=Ksrleaxxxhw"
+    enabled: true
+
+  - name: "Stream 2"
+    url: "https://www.youtube.com/watch?v=C32EiZiQPkQ"
+    enabled: true

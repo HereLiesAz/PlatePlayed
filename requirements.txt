@@ -1,0 +1,11 @@
+# Core runtime dependencies for PlatePlayed.
+# These are lightweight and required for the pipeline, database, and API.
+yt-dlp>=2024.1.0
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+SQLAlchemy>=2.0.0
+PyYAML>=6.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+Pillow>=10.0.0
+alembic>=1.13.0

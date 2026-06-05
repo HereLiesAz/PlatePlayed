@@ -1,0 +1,128 @@
+"""Orchestrator: build shared resources and run a worker per stream."""
+
+from __future__ import annotations
+
+import logging
+import threading
+import time
+
+from .config import Config
+from .db import init_db
+from .detector import build_detector
+from .recorder import Recorder
+from .alerting import Alerter
+from .make_model import build_make_model_classifier
+from .notify import build_notifier
+from .storage import ScreenshotStore
+from .taxonomy import build_taxonomy_classifier
+from .tracking import PlateTracker
+from .vehicle import VehicleAnalyzer, build_vehicle_detector
+from .worker import StreamWorker
+
+logger = logging.getLogger(__name__)
+
+
+class Pipeline:
+    """Owns the detector, DB, recorder, and the set of stream workers."""
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
+        self.session_factory = init_db(config.database_url)
+        self.detector = build_detector(config.detector)
+        self.store = ScreenshotStore(config.screenshot_dir)
+        self.recorder = Recorder(
+            self.session_factory,
+            self.store,
+            min_confidence=config.min_confidence,
+            dedup_cooldown_seconds=config.dedup_cooldown_seconds,
+            save_plate_crops=config.save_plate_crops,
+        )
+        self.vehicle_analyzer = None
+        if config.vehicle_enabled:
+            detector = build_vehicle_detector(
+                config.vehicle_detector,
+                model=config.vehicle_model,
+                min_confidence=config.vehicle_min_confidence,
+            )
+            make_model = None
+            if config.make_model_enabled:
+                make_model = build_make_model_classifier(
+                    config.make_model_backend,
+                    model_path=config.make_model_path,
+                    min_confidence=config.make_model_min_confidence,
+                    region=config.make_model_region,
+                )
+            taxonomy = None
+            if config.taxonomy_enabled:
+                taxonomy = build_taxonomy_classifier(
+                    config.taxonomy_backend,
+                    model_path=config.taxonomy_model_path,
+                    version=config.taxonomy_version,
+                    min_confidence=config.taxonomy_min_confidence,
+                )
+            self.vehicle_analyzer = VehicleAnalyzer(
+                detector,
+                make_model_classifier=make_model,
+                taxonomy_classifier=taxonomy,
+            )
+        elif config.make_model_enabled or config.taxonomy_enabled:
+            logger.warning(
+                "make_model/taxonomy need vehicle.enabled=true (they run on the "
+                "vehicle crop); they will be inactive."
+            )
+        self.alerter = None
+        if config.alerts_enabled:
+            self.alerter = Alerter(
+                self.session_factory,
+                build_notifier(config.alert_webhook_url),
+                cooldown_seconds=config.alert_cooldown_seconds,
+            )
+        self._detect_lock = threading.Lock()
+        self._workers: list[StreamWorker] = []
+
+    def run(self) -> None:
+        """Start all enabled stream workers and block until interrupted."""
+        streams = self.config.enabled_streams
+        if not streams:
+            logger.warning("No enabled streams in config. Nothing to do.")
+            return
+
+        logger.info(
+            "Starting pipeline: %d stream(s), detector=%s",
+            len(streams), getattr(self.detector, "name", "unknown"),
+        )
+        for stream in streams:
+            tracker = (
+                PlateTracker(
+                    iou_threshold=self.config.track_iou_threshold,
+                    min_hits=self.config.track_min_hits,
+                    max_age_seconds=self.config.track_max_age_seconds,
+                )
+                if self.config.tracking_enabled
+                else None
+            )
+            worker = StreamWorker(
+                stream,
+                self.detector,
+                self.recorder,
+                sample_interval_seconds=self.config.sample_interval_seconds,
+                detect_lock=self._detect_lock,
+                tracker=tracker,
+                vehicle_analyzer=self.vehicle_analyzer,
+                alerter=self.alerter,
+            )
+            worker.start()
+            self._workers.append(worker)
+
+        try:
+            while any(w.is_alive() for w in self._workers):
+                time.sleep(1.0)
+        except KeyboardInterrupt:
+            logger.info("Interrupted — shutting down workers…")
+            self.stop()
+
+    def stop(self) -> None:
+        for worker in self._workers:
+            worker.stop()
+        for worker in self._workers:
+            worker.join(timeout=10.0)

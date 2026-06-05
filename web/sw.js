@@ -1,5 +1,6 @@
-// Bump CACHE when the app shell changes to invalidate old caches.
-const CACHE = "pwa-starter-v1";
+// Cache the app shell so the dashboard loads offline. API/screenshot
+// responses are always fetched fresh (never cached).
+const CACHE = "com.hereliesaz.plateplayed-v2";
 const SHELL = [
     "/",
     "/index.html",
@@ -23,17 +24,18 @@ self.addEventListener("activate", (event) => {
     self.clients.claim();
 });
 
-// Network-first for navigations (fresh content when online, cached shell when
-// offline); cache-first for other assets.
 self.addEventListener("fetch", (event) => {
     const req = event.request;
+    const url = new URL(req.url);
+
+    // Never cache live data.
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/screenshots/")) {
+        return; // default network behaviour
+    }
+
     if (req.mode === "navigate") {
-        event.respondWith(
-            fetch(req).catch(() => caches.match("/index.html"))
-        );
+        event.respondWith(fetch(req).catch(() => caches.match("/index.html")));
         return;
     }
-    event.respondWith(
-        caches.match(req).then((cached) => cached || fetch(req))
-    );
+    event.respondWith(caches.match(req).then((cached) => cached || fetch(req)));
 });
