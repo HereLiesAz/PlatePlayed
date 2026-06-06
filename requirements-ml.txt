@@ -5,7 +5,9 @@
 #
 #   pip install -r requirements-ml.txt
 #
-fast-alpr>=0.1.0
+# 0.4.x is the API verified against: OcrResult.confidence is a per-character
+# list and DetectionResult.bounding_box exposes x1/y1/x2/y2 (see detector.py).
+fast-alpr>=0.4.0
 onnxruntime>=1.16.0
 # Vehicle type detection (car/truck/bus/motorcycle) via a YOLO COCO model.
 ultralytics>=8.0.0

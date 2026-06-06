@@ -13,6 +13,7 @@ A small interface (`Detector`) with two implementations:
 from __future__ import annotations
 
 import logging
+import statistics
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -86,11 +87,23 @@ class FastAlprDetector:
             detections.append(
                 PlateDetection(
                     text=text,
-                    confidence=float(getattr(ocr, "confidence", 0.0) or 0.0),
+                    confidence=_ocr_confidence(getattr(ocr, "confidence", 0.0)),
                     box=box,
                 )
             )
         return detections
+
+
+def _ocr_confidence(confidence: float | list[float] | None) -> float:
+    """Collapse fast-alpr's OCR confidence to a single 0..1 score.
+
+    The default OCR model returns one probability *per character*
+    (``list[float]``); other backends may return a single ``float``. We average
+    the per-character values, matching how fast-alpr aggregates them itself.
+    """
+    if isinstance(confidence, (list, tuple)):
+        return statistics.mean(confidence) if confidence else 0.0
+    return float(confidence or 0.0)
 
 
 def _normalize_plate(text: str) -> str:
