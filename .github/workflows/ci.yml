@@ -2,7 +2,7 @@
 # central-source-path: .github/workflows/ci.yml
 # central-source-sha256: 5fe909668facbf1604c5b7b3b84ba42ecff633f5ed2a52a4ba54180d8a0053d0
 # This file intentionally contains no repository secrets.
-name: CI [central proxy]
+name: CI
 on:
   push:
     branches: [main]
